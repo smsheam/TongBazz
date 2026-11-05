@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Catch-all default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for User / Tong Dokan profile
+    function isValidUser(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 60 &&
+             (!('stallName' in data) || (data.stallName is string && data.stallName.size() <= 80)) &&
+             (!('canopyStyle' in data) || (data.canopyStyle is string && data.canopyStyle.size() <= 40)) &&
+             (!('specialtyItem' in data) || (data.specialtyItem is string && data.specialtyItem.size() <= 60)) &&
+             (!('benchColor' in data) || (data.benchColor is string && data.benchColor.size() <= 30)) &&
+             (!('slogan' in data) || (data.slogan is string && data.slogan.size() <= 120));
+    }
+
+    // Validation for Room Doc
+    function isValidRoom(data) {
+      return data.roomCode is string && data.roomCode.size() > 0 && data.roomCode.size() <= 16 &&
+             data.hostId is string && data.hostId.size() <= 128 &&
+             data.status in ['LOBBY', 'ROUND_RUNNING', 'ROUND_SETTLEMENT', 'MATCH_OVER'];
+    }
+
+    // Match /users/{userId}
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && incoming().id == userId;
+      allow update: if isOwner(userId) && isValidUser(incoming()) && incoming().id == existing().id;
+      allow delete: if isOwner(userId);
+    }
+
+    // Match /rooms/{roomId}
+    match /rooms/{roomId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(roomId) && isValidRoom(incoming());
+      allow update: if isSignedIn() && isValidRoom(incoming());
+      allow delete: if isSignedIn() && existing().hostId == request.auth.uid;
+    }
+  }
+}

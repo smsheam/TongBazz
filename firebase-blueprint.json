@@ -1,0 +1,127 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile, statistics, and customized Tong Dokan information",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "User UID"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 60,
+          "description": "Display name of the player"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "User email address"
+        },
+        "avatar": {
+          "type": "string",
+          "maxLength": 10,
+          "description": "Avatar emoji or identifier"
+        },
+        "stallName": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Customized Tong Dokan name"
+        },
+        "canopyStyle": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "Canopy theme style"
+        },
+        "specialtyItem": {
+          "type": "string",
+          "maxLength": 60,
+          "description": "Signature specialty tea or snack"
+        },
+        "benchColor": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Stool / bench color"
+        },
+        "slogan": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Tea stall signboard slogan"
+        },
+        "totalMatchesPlayed": {
+          "type": "number",
+          "description": "Total matches participated"
+        },
+        "bestProfit": {
+          "type": "number",
+          "description": "Highest single-round profit"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["id", "displayName"]
+    },
+    "GameRoomDoc": {
+      "title": "GameRoomDoc",
+      "description": "Multiplayer room state with synchronized players, orders, and timer",
+      "type": "object",
+      "properties": {
+        "roomCode": {
+          "type": "string",
+          "maxLength": 16,
+          "description": "Unique room code"
+        },
+        "hostId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Host player UID"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["LOBBY", "ROUND_RUNNING", "ROUND_SETTLEMENT", "MATCH_OVER"],
+          "description": "Current room state"
+        },
+        "roundIndex": {
+          "type": "number",
+          "description": "Current round number"
+        },
+        "totalRounds": {
+          "type": "number",
+          "description": "Total rounds in match"
+        },
+        "currentShopkeeperId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "UID of current shopkeeper"
+        },
+        "roundStartTime": {
+          "type": "number",
+          "description": "Timestamp when round started"
+        },
+        "phase": {
+          "type": "string",
+          "maxLength": 32,
+          "description": "Current phase (PROCUREMENT, etc.)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["roomCode", "hostId", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual user profiles and customized Tong Dokan definitions"
+    },
+    "/rooms/{roomId}": {
+      "schema": "GameRoomDoc",
+      "description": "Active multiplayer game rooms"
+    }
+  }
+}

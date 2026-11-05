@@ -1,0 +1,6 @@
+{
+  "name": "টংবাজ (TONGBAJ)",
+  "description": "চা খাও, ধান্দা করো, টং জমাও! A Bangladeshi roadside tea-stall party game featuring shopkeepers, customers, hidden saboteurs, arcade mini-games, and business strategy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
