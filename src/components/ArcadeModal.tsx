@@ -60,25 +60,25 @@ export const ArcadeModal: React.FC<ArcadeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-      <div className="bg-[#181d28] border border-amber-600/40 rounded-2xl w-full max-w-lg p-5 shadow-2xl text-slate-100 flex flex-col max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+      <div className="bg-white border-2 border-amber-400 rounded-3xl w-full max-w-lg p-5 shadow-2xl text-stone-900 flex flex-col max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-700 pb-3 mb-4">
+        <div className="flex items-center justify-between border-b border-amber-100 pb-2 mb-3">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🕹️</span>
             <div>
-              <h3 className="font-bold text-amber-400 text-lg">পেশাগত মিনি-গেম আর্কেড</h3>
-              <p className="text-xs text-slate-400">সফল হলে +৫ পয়েন্ট ও পেশা মিশন সম্পন্ন!</p>
+              <h3 className="font-bold text-amber-900 text-base">পেশাগত মিনি-গেম আর্কেড</h3>
+              <p className="text-[11px] text-stone-500">১৫–২৫ সেকেন্ড • জিতলে +৫ পয়েন্ট!</p>
             </div>
           </div>
           {gameState === 'PLAYING' && (
-            <div className="bg-amber-500/20 border border-amber-500/40 px-3 py-1 rounded-full text-xs font-mono font-bold text-amber-300">
+            <div className="bg-amber-100 border border-amber-300 px-3 py-1 rounded-full text-xs font-mono font-bold text-amber-900">
               ⏱️ {timeLeft}s
             </div>
           )}
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white text-lg p-1"
+            className="text-stone-400 hover:text-stone-700 text-lg p-1"
           >
             ✕
           </button>
@@ -86,21 +86,21 @@ export const ArcadeModal: React.FC<ArcadeModalProps> = ({
 
         {/* Content based on miniGameId */}
         {gameState === 'INTRO' && (
-          <div className="py-6 text-center space-y-4">
+          <div className="py-6 text-center space-y-3">
             <div className="text-5xl">🎯</div>
-            <h4 className="text-xl font-bold text-slate-100">
+            <h4 className="text-lg font-bold text-stone-900">
               {getMiniGameTitle(miniGameId)}
             </h4>
-            <p className="text-sm text-slate-300 max-w-md mx-auto">
+            <p className="text-xs text-stone-600 max-w-md mx-auto">
               {getMiniGameInstruction(miniGameId)}
             </p>
-            <div className="pt-4">
+            <div className="pt-3">
               <button
                 onClick={() => {
                   setTimeLeft(25);
                   setGameState('PLAYING');
                 }}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl shadow-lg transition-transform hover:scale-105"
+                className="bg-amber-600 hover:bg-amber-500 text-white font-bold px-6 py-2 rounded-xl shadow-md transition-transform hover:scale-105 text-xs"
               >
                 খেলা শুরু করুন! (Start)
               </button>
@@ -119,18 +119,18 @@ export const ArcadeModal: React.FC<ArcadeModalProps> = ({
         )}
 
         {gameState === 'SUCCESS' && (
-          <div className="py-8 text-center space-y-3 animate-fade-in">
-            <div className="text-6xl animate-bounce">🎉</div>
-            <h4 className="text-2xl font-bold text-emerald-400">অসাধারণ! আপনি বিজয়ী!</h4>
-            <p className="text-sm text-slate-300">পেশাগত চ্যালেঞ্জ সফলভাবে শেষ হয়েছে। (+৫ পয়েন্ট)</p>
+          <div className="py-6 text-center space-y-2">
+            <div className="text-5xl animate-bounce">🎉</div>
+            <h4 className="text-xl font-bold text-emerald-700">অসাধারণ! আপনি বিজয়ী!</h4>
+            <p className="text-xs text-stone-600">পেশাগত আর্কেড চ্যালেঞ্জ সফল হয়েছে (+৫ পয়েন্ট)।</p>
           </div>
         )}
 
         {gameState === 'FAILED' && (
-          <div className="py-8 text-center space-y-3">
-            <div className="text-6xl">💥</div>
-            <h4 className="text-2xl font-bold text-red-400">সময় শেষ বা ভুল উত্তর!</h4>
-            <p className="text-sm text-slate-300">পরের রাউন্ডে আবার চেষ্টা করবেন।</p>
+          <div className="py-6 text-center space-y-2">
+            <div className="text-5xl">💥</div>
+            <h4 className="text-xl font-bold text-red-600">সময় শেষ বা ভুল উত্তর!</h4>
+            <p className="text-xs text-stone-600">পরের রাউন্ডে আবার চেষ্টা করবেন।</p>
           </div>
         )}
       </div>

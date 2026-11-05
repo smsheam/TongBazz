@@ -30,7 +30,6 @@ export const Lobby: React.FC<LobbyProps> = ({
   const [roomCodeInput, setRoomCodeInput] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<BotDifficulty>('NORMAL');
   const [isJoining, setIsJoining] = useState(false);
-  const [showRules, setShowRules] = useState(false);
 
   // If room exists, show Room Waiting Screen
   if (room && currentPlayer) {
@@ -38,62 +37,59 @@ export const Lobby: React.FC<LobbyProps> = ({
     const canStart = room.players.length >= 4 && room.players.length <= 6;
 
     return (
-      <div className="w-full max-w-3xl mx-auto space-y-6 py-4 px-3">
-        {/* Room Header */}
-        <div className="bg-[#151922] border-2 border-amber-500/60 rounded-3xl p-5 shadow-2xl">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-700/80 pb-3 gap-3">
+      <div className="w-full max-w-2xl mx-auto space-y-4 py-2 px-3 text-stone-900">
+        <div className="bg-white border-2 border-amber-300 rounded-3xl p-5 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-amber-100 pb-3 gap-2">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-3xl">☕</span>
-                <h2 className="text-2xl font-black text-amber-400">টংবাজ রুম লবি</h2>
+              <div className="flex items-center gap-1.5">
+                <span className="text-2xl">☕</span>
+                <h2 className="text-xl font-black text-amber-900">টংবাজ রুম লবি</h2>
               </div>
-              <p className="text-xs text-slate-300 mt-1">
-                বন্ধুদের সাথে কোড শেয়ার করুন অথবা বট যোগ করে ৪–৬ জন পূর্ণ করুন।
+              <p className="text-xs text-stone-600">
+                বন্ধুদের কোড দিন বা বট দিয়ে ৪–৬ জন পূর্ণ করে খেলা শুরু করুন।
               </p>
             </div>
 
-            <div className="bg-slate-900 border border-amber-500/40 px-4 py-2 rounded-2xl text-center">
-              <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">
-                রুম কোড (Room Code)
-              </span>
-              <span className="text-xl font-mono font-black text-amber-300 tracking-widest select-all">
+            <div className="bg-amber-50 border border-amber-300 px-3.5 py-1.5 rounded-xl text-center">
+              <span className="text-[9px] text-stone-500 block uppercase font-bold">রুম কোড</span>
+              <span className="text-lg font-mono font-black text-amber-900 tracking-wider">
                 {room.roomCode}
               </span>
             </div>
           </div>
 
           {/* Player Seats Grid (4-6 Players) */}
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-slate-300">
-                👥 অংশগ্রহণকারী ({room.players.length}/৬ জন):
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-bold text-stone-800">
+                👥 খেলোয়াড় তালিকা ({room.players.length}/৬ জন):
               </span>
-              <span className="text-xs text-amber-400 font-mono">
+              <span className="text-[11px] text-amber-800 font-mono font-bold">
                 {room.players.length < 4
-                  ? `ম্যাচ শুরুর জন্য আরও ${4 - room.players.length} জন লাগবে`
-                  : 'ম্যাচ শুরু করার জন্য প্রস্তুত!'}
+                  ? `আর ${4 - room.players.length} জন লাগবে`
+                  : '✓ ম্যাচ শুরুর প্রস্তুত'}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {room.players.map((p, idx) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {room.players.map((p) => (
                 <div
                   key={p.id}
-                  className={`bg-slate-800/80 border rounded-2xl p-3 flex items-center justify-between shadow ${
+                  className={`border rounded-xl p-2.5 flex items-center justify-between shadow-2xs ${
                     p.id === currentPlayer.id
-                      ? 'border-amber-400 bg-amber-500/10'
-                      : 'border-slate-700'
+                      ? 'border-amber-500 bg-amber-50'
+                      : 'border-stone-200 bg-[#FFF8F0]'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-2xl shrink-0 p-1 bg-slate-900 rounded-xl">
+                  <div className="flex items-center gap-2 truncate">
+                    <span className="text-xl p-1 bg-white rounded-lg border border-amber-100 shrink-0">
                       {p.avatar}
                     </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-100 truncate">
+                    <div className="truncate">
+                      <p className="text-xs font-bold text-stone-900 truncate">
                         {p.name} {p.id === currentPlayer.id ? '(আপনি)' : ''}
                       </p>
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-[10px] text-stone-500">
                         {p.isHost ? '👑 হোস্ট' : p.isBot ? `🤖 বট (${p.botDifficulty})` : 'খেলোয়াড়'}
                       </p>
                     </div>
@@ -102,7 +98,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                   {isHost && p.isBot && (
                     <button
                       onClick={() => onRemoveBot(p.id)}
-                      className="text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-slate-900 border border-slate-700"
+                      className="text-red-600 hover:text-red-700 text-xs px-2 py-0.5 rounded bg-white border border-red-200"
                     >
                       ✕
                     </button>
@@ -110,11 +106,10 @@ export const Lobby: React.FC<LobbyProps> = ({
                 </div>
               ))}
 
-              {/* Empty seats placeholders */}
               {Array.from({ length: 6 - room.players.length }).map((_, i) => (
                 <div
                   key={i}
-                  className="border-2 border-dashed border-slate-700/80 rounded-2xl p-3 flex items-center justify-center text-slate-500 text-xs"
+                  className="border-2 border-dashed border-stone-200 rounded-xl p-2.5 flex items-center justify-center text-stone-400 text-xs"
                 >
                   খালি আসন #{room.players.length + i + 1}
                 </div>
@@ -124,24 +119,24 @@ export const Lobby: React.FC<LobbyProps> = ({
 
           {/* Host Bot Controls */}
           {isHost && room.players.length < 6 && (
-            <div className="mt-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-[#FFF8F0] border border-amber-200 rounded-2xl p-3 space-y-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div>
-                  <h4 className="text-xs font-bold text-amber-300">🤖 AI বট যোগ করুন</h4>
-                  <p className="text-[11px] text-slate-400">
-                    বটরা আসল খেলোয়াড়ের মতোই খাবার অর্ডার দেয়, চা বানায় ও ষড়যন্ত্র করে!
+                  <h4 className="text-xs font-bold text-amber-900">🤖 AI বট যুক্ত করুন</h4>
+                  <p className="text-[10px] text-stone-500">
+                    বটরা আসল মানুষের মতোই খাবার অর্ডার দেয় ও গোলমাল করে!
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <select
                     value={selectedDifficulty}
                     onChange={(e) => setSelectedDifficulty(e.target.value as BotDifficulty)}
-                    className="bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-hidden"
+                    className="bg-white border border-stone-300 rounded-lg px-2 py-1 text-xs text-stone-800"
                   >
-                    <option value="EASY">সহজ বট (Easy)</option>
-                    <option value="NORMAL">স্বাভাবিক বট (Normal)</option>
-                    <option value="HARD">কঠিন বট (Hard)</option>
+                    <option value="EASY">সহজ (Easy)</option>
+                    <option value="NORMAL">স্বাভাবিক (Normal)</option>
+                    <option value="HARD">কঠিন (Hard)</option>
                   </select>
 
                   <button
@@ -149,9 +144,9 @@ export const Lobby: React.FC<LobbyProps> = ({
                       onAddBot(selectedDifficulty);
                       sound.playRickshawBell();
                     }}
-                    className="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 text-xs font-bold px-3 py-1.5 rounded-xl"
+                    className="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg"
                   >
-                    + বট যোগ করুন
+                    + বট
                   </button>
 
                   <button
@@ -164,9 +159,9 @@ export const Lobby: React.FC<LobbyProps> = ({
                         sound.playRickshawBell();
                       }
                     }}
-                    className="bg-amber-600/30 hover:bg-amber-600 text-amber-200 hover:text-slate-950 border border-amber-500 text-xs font-bold px-3 py-1.5 rounded-xl"
+                    className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-bold px-2.5 py-1 rounded-lg"
                   >
-                    ⚡ ৪ জন পূর্ণ করুন
+                    ⚡ ৪ জন পূর্ণ
                   </button>
                 </div>
               </div>
@@ -174,7 +169,7 @@ export const Lobby: React.FC<LobbyProps> = ({
           )}
 
           {/* Start Button */}
-          <div className="mt-5 pt-3 border-t border-slate-700/80">
+          <div className="pt-2 border-t border-amber-100">
             {isHost ? (
               <button
                 disabled={!canStart}
@@ -182,18 +177,18 @@ export const Lobby: React.FC<LobbyProps> = ({
                   onStartMatch();
                   sound.playKettleWhistle();
                 }}
-                className={`w-full py-3.5 rounded-2xl font-extrabold text-sm transition-all shadow-xl ${
+                className={`w-full py-3 rounded-xl font-bold text-xs transition-all shadow-md ${
                   canStart
-                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 cursor-pointer hover:scale-[1.01]'
-                    : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                    ? 'bg-amber-600 hover:bg-amber-500 text-white cursor-pointer'
+                    : 'bg-stone-200 text-stone-400 cursor-not-allowed'
                 }`}
               >
                 {canStart
                   ? '🚀 টংয়ের খেলা শুরু করুন! (Start Match)'
-                  : `ম্যাচ শুরুর জন্য কমপক্ষে ৪ জন খেলোয়াড় দরকার (${room.players.length}/৪)`}
+                  : `ম্যাচ শুরুর জন্য কমপক্ষে ৪ জন দরকার (${room.players.length}/৪)`}
               </button>
             ) : (
-              <p className="text-center text-xs text-amber-300 animate-pulse py-2">
+              <p className="text-center text-xs text-amber-800 animate-pulse">
                 হোস্ট ম্যাচ শুরু করার অপেক্ষায়...
               </p>
             )}
@@ -203,72 +198,52 @@ export const Lobby: React.FC<LobbyProps> = ({
     );
   }
 
-  // Initial Welcome Screen (Create or Join)
+  // Welcome Form: Create or Join
   return (
-    <div className="w-full max-w-xl mx-auto py-8 px-4 space-y-6">
-      {/* Brand Hero */}
-      <div className="text-center space-y-3">
-        <div className="relative inline-block">
-          <img
-            src="/assets/aistudio/image_62254eee.png"
-            alt="টংবাজ লোগো"
-            className="w-32 h-32 mx-auto object-contain filter drop-shadow-xl"
-            referrerPolicy="no-referrer"
-          />
+    <div className="w-full max-w-md mx-auto py-4 px-3 text-stone-900 space-y-4">
+      <div className="bg-white border-2 border-amber-300 rounded-3xl p-6 shadow-md space-y-4">
+        <div className="text-center space-y-1">
+          <span className="text-3xl">☕</span>
+          <h2 className="text-xl font-black text-amber-900">টংবাজ ম্যাচ লবি</h2>
+          <p className="text-xs text-stone-500">রুম তৈরি করুন অথবা কোড দিয়ে প্রবেশ করুন</p>
         </div>
-        <h1 className="text-4xl md:text-5xl font-black text-amber-400 tracking-tight">
-          টংবাজ (TONGBAJ)
-        </h1>
-        <p className="text-amber-200 font-semibold text-base">
-          চা খাও, ধান্দা করো, টং জমাও! ☕
-        </p>
-        <p className="text-xs text-slate-400 max-w-sm mx-auto">
-          একটি রোমাঞ্চকর বাংলাদেশি মাল্টিপ্লেয়ার সামাজিক পার্টি গেম। ৪–৬ জন খেলোয়াড়, ৩ মিনিটের
-          রাউন্ড, দোকানদার, কাস্টমার, গোপন ধান্দাবাজ ও ১০টি আর্কেড গেম!
-        </p>
-      </div>
 
-      {/* Action Card */}
-      <div className="bg-[#151922] border-2 border-amber-600/50 rounded-3xl p-6 shadow-2xl space-y-4">
-        {/* Player Name Input */}
         <div>
-          <label className="text-xs font-bold text-slate-300 block mb-1.5">
-            আপনার নাম (Your Name):
+          <label className="text-xs font-bold text-stone-700 block mb-1">
+            আপনার নাম (Player Name):
           </label>
           <input
             type="text"
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
-            placeholder="যেমন: রাহাত, তানভীর, সাকিব..."
+            placeholder="যেমন: তানভীর, সাকিব, রাহাত..."
             maxLength={18}
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-amber-400"
+            className="w-full bg-[#FFF8F0] border border-amber-200 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-hidden focus:border-amber-500"
           />
         </div>
 
-        {/* Tab switch: Create vs Join */}
-        <div className="flex bg-slate-900 p-1 rounded-xl">
+        <div className="flex bg-[#FFF8F0] p-1 rounded-xl border border-amber-200">
           <button
             onClick={() => setIsJoining(false)}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${
-              !isJoining ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+              !isJoining ? 'bg-amber-600 text-white shadow-xs' : 'text-stone-600'
             }`}
           >
-            নতুন রুম তৈরি করুন (Create)
+            নতুন রুম (Create)
           </button>
           <button
             onClick={() => setIsJoining(true)}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${
-              isJoining ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+              isJoining ? 'bg-amber-600 text-white shadow-xs' : 'text-stone-600'
             }`}
           >
             কোড দিয়ে প্রবেশ (Join)
           </button>
         </div>
 
-        {/* Join Code Input (if joining) */}
         {isJoining && (
           <div>
-            <label className="text-xs font-bold text-slate-300 block mb-1.5">
+            <label className="text-xs font-bold text-stone-700 block mb-1">
               রুম কোড (Room Code):
             </label>
             <input
@@ -277,12 +252,11 @@ export const Lobby: React.FC<LobbyProps> = ({
               onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
               placeholder="যেমন: TONG-89"
               maxLength={10}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono text-amber-300 uppercase placeholder-slate-500 focus:outline-hidden focus:border-amber-400"
+              className="w-full bg-[#FFF8F0] border border-amber-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-amber-900 uppercase focus:outline-hidden focus:border-amber-500"
             />
           </div>
         )}
 
-        {/* Submit Button */}
         <div>
           {isJoining ? (
             <button
@@ -291,7 +265,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                 onJoinRoom(roomCodeInput.trim(), nameInput.trim());
                 sound.playRickshawBell();
               }}
-              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs disabled:opacity-40 shadow-xs"
             >
               রুমে প্রবেশ করুন 🚪
             </button>
@@ -302,36 +276,12 @@ export const Lobby: React.FC<LobbyProps> = ({
                 onCreateRoom(nameInput.trim());
                 sound.playRickshawBell();
               }}
-              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs disabled:opacity-40 shadow-xs"
             >
-              রুম তৈরি করুন (Host Room) ☕
+              রুম তৈরি করুন ☕
             </button>
           )}
         </div>
-
-        {/* Rules button */}
-        <div className="text-center pt-2">
-          <button
-            onClick={() => setShowRules(!showRules)}
-            className="text-xs text-amber-300/80 hover:text-amber-300 underline"
-          >
-            {showRules ? 'নিয়মাবলী বন্ধ করুন ▲' : 'টংবাজ খেলার নিয়মাবলী দেখুন ▼'}
-          </button>
-        </div>
-
-        {showRules && (
-          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 space-y-2 text-left">
-            <p className="font-bold text-amber-300 text-sm">টংবাজ কীভাবে খেলবেন?</p>
-            <ul className="list-disc pl-4 space-y-1 text-[11px] text-slate-400">
-              <li>প্রত্যেক রাউন্ডে একজন দোকানদার এবং বাকিরা কাস্টমার।</li>
-              <li>দোকানদার ২০০০ টাকার পাইকারি মালামাল কিনে ৩ মিনিটে দোকান চালায়।</li>
-              <li>অর্ডার আসার পর মাত্র ৫ সেকেন্ডের মধ্যে তা দোকানদারের চোখ থেকে মিলিয়ে যায়!</li>
-              <li>কাস্টমারদের মধ্যে একজন গোপন ধান্দাবাজ—যার কাজ লোডশেডিং, বৃষ্টি ও ভুয়া অর্ডার দেওয়া!</li>
-              <li>কাস্টমাররা ১০টি বিভিন্ন আর্কেড মিনি-গেম খেলে তাদের পেশা মিশন পূর্ণ করে।</li>
-              <li>সবাই একটি করে দোকানদার রাউন্ড খেলার পর চ্যাম্পিয়ন ট্রফি দেওয়া হয়!</li>
-            </ul>
-          </div>
-        )}
       </div>
     </div>
   );

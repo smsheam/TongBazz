@@ -7,6 +7,18 @@ export type Role = 'SHOPKEEPER' | 'CUSTOMER' | 'SABOTEUR';
 export type BotDifficulty = 'EASY' | 'NORMAL' | 'HARD';
 export type RoundPhase = 'PROCUREMENT' | 'MAIN_GAMEPLAY' | 'MISSION_TIME' | 'FINAL_FULFILMENT' | 'SETTLEMENT';
 
+export interface ProductPack {
+  id: string;
+  nameBn: string;
+  nameEn: string;
+  icon: string;
+  category: 'TEA' | 'SNACK';
+  retailPrice: number;   // Selling price per serving
+  packCost: number;      // Wholesale cost for 1 pack
+  yieldCount: number;    // Servings yielded per pack (5 for all)
+  cookingTimeSec: number; // Red Tea: 5s, Milk Tea: 8s, Lemon Tea: 5s, Biscuit: 0s, Singara: 5s
+}
+
 export interface Player {
   id: string;
   name: string;
@@ -15,12 +27,12 @@ export interface Player {
   botDifficulty?: BotDifficulty;
   isHost: boolean;
   personalWallet: number; // Customer personal funds (starts ৳150-৳250)
-  reputation: number; // Starts at 10, lost on cancellation
+  reputation: number;     // Starts at 10, lost on cancellation
   professionId: string;
   assignedMiniGameId: string;
   objectives: Objective[];
-  inventory: string[]; // Private non-transferable items
-  isSaboteur: boolean; // Hidden role
+  inventory: string[];
+  isSaboteur: boolean;
   isCurrentShopkeeper: boolean;
   totalScore: number;
   roleScores: {
@@ -34,45 +46,14 @@ export interface Player {
     ordersPlaced: number;
     ordersCancelled: number;
     totalProfit: number;
+    itemsConsumed: number;
     sabotageSuccesses: number;
     arcadeGamesWon: number;
   };
 }
 
-export interface Ingredient {
-  id: string;
-  nameBn: string;
-  nameEn: string;
-  unit: string;
-  wholesalePrice: number; // e.g. ৳60 for 1000ml milk
-  packSize: number; // e.g. 1000
-  consumptionPerTeaCup?: number; // e.g. 50ml per cup
-}
-
-export interface MenuItem {
-  id: string;
-  nameBn: string;
-  nameEn: string;
-  category: 'TEA' | 'FOOD';
-  price: number; // Wholesale / selling price
-  cookingTimeSec: number;
-  recipe?: {
-    milkMl?: number;
-    teaLeavesG?: number;
-    sugarG?: number;
-    waterMl?: number;
-    cupsPcs?: number;
-    singaraPcs?: number;
-    samosaPcs?: number;
-    breadPcs?: number;
-    bananaPcs?: number;
-    eggPcs?: number;
-    biscuitPcs?: number;
-  };
-}
-
 export interface OrderItem {
-  itemId: string;
+  productId: string;
   quantity: number;
   itemPrice: number;
 }
@@ -86,7 +67,7 @@ export interface Order {
   banglaSentence: string;
   timestamp: number;
   phase: 'PENDING' | 'PREPARING' | 'DELIVERED' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED';
-  expiresFromShopkeeperViewAt: number; // 5 seconds after placement
+  expiresFromShopkeeperViewAt: number; // 5 seconds after placement (memory challenge)
   deliveredItems: OrderItem[];
   cancellationReason?: string;
   isFake?: boolean; // Saboteur fake order
@@ -94,7 +75,7 @@ export interface Order {
 
 export interface CookingTask {
   id: string;
-  menuItemId: string;
+  productId: string;
   targetCustomerId?: string;
   startTime: number;
   durationMs: number;
@@ -103,7 +84,7 @@ export interface CookingTask {
 
 export interface Objective {
   id: string;
-  type: 'ECONOMIC' | 'PROFESSION_ARCADE' | 'TEA_STALL' | 'BONUS' | 'SHOPKEEPER';
+  type: 'ECONOMIC' | 'PROFESSION' | 'TEA_STALL' | 'BONUS' | 'SHOPKEEPER';
   titleBn: string;
   titleEn: string;
   descriptionBn: string;
@@ -114,16 +95,6 @@ export interface Objective {
   targetProgress: number;
 }
 
-export interface Profession {
-  id: string;
-  nameBn: string;
-  nameEn: string;
-  icon: string;
-  loreBn: string;
-  loreEn: string;
-  suggestedItems: string[];
-}
-
 export interface FinancialSettlement {
   initialCapital: number; // ৳200
   procurementSpending: number;
@@ -131,7 +102,6 @@ export interface FinancialSettlement {
   salesRevenue: number;
   cancellationCompensation: number;
   unsoldInventoryValue: number;
-  wastedCost: number;
   netProfit: number;
   orderAccuracy: number;
   ordersAttempted: number;
@@ -140,20 +110,12 @@ export interface FinancialSettlement {
 
 export interface SaboteurState {
   fakeOrdersUsed: number; // max 2
-  rainUsed: number; // max 1
-  blackoutUsed: number; // max 2
+  rainUsed: number;       // max 1
+  blackoutUsed: number;   // max 2
   teaseCount: number;
   isRainActive: boolean;
   isBlackoutActive: boolean;
   blackoutEndsAt: number;
-}
-
-export interface GameEvent {
-  id: string;
-  titleBn: string;
-  descriptionBn: string;
-  type: 'RAIN' | 'BLACKOUT' | 'VIP' | 'MILK_SHORTAGE' | 'INSPECTION';
-  expiresAt: number;
 }
 
 export interface ChatMessage {
@@ -175,14 +137,14 @@ export interface GameRoom {
   players: Player[];
   currentShopkeeperId: string;
   roundIndex: number;
-  totalRounds: number; // Equal to player count so everyone gets 1 shopkeeper turn
+  totalRounds: number;
   roundStartTime: number;
   roundDurationSeconds: number; // 180 seconds
   remainingSeconds: number;
   phase: RoundPhase;
   
-  // Shopkeeper inventory in stock
-  shopkeeperInventory: Record<string, number>;
+  // Shopkeeper Stock & Budget (Starting ৳200)
+  shopkeeperStock: Record<string, number>; // productId -> available prepared servings
   shopkeeperBudget: number; // starts at ৳200
   cookingTasks: CookingTask[];
   readyItems: OrderItem[];
@@ -193,12 +155,11 @@ export interface GameRoom {
   
   // Sabotage & Events
   saboteurState: SaboteurState;
-  activeEvents: GameEvent[];
   
   // Chat
   chatMessages: ChatMessage[];
   
-  // Settlement of current round
+  // Settlement
   currentSettlement?: FinancialSettlement;
   saboteurRevealed: boolean;
 }

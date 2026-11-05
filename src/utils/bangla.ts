@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MENU_ITEMS } from '../data/gameData';
+import { PRODUCTS } from '../data/gameData';
 import { OrderItem } from '../types/game';
 
 const BANGLA_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
@@ -32,18 +32,18 @@ export function generateBanglaOrderSentence(items: OrderItem[]): string {
 
   const phrases: string[] = [];
   for (const item of items) {
-    const menuItem = MENU_ITEMS.find((m) => m.id === item.itemId);
-    if (!menuItem) continue;
+    const product = PRODUCTS.find((p) => p.id === item.productId);
+    if (!product) continue;
 
     const bnQty = toBanglaNumber(item.quantity);
-    if (menuItem.category === 'TEA') {
-      phrases.push(`${bnQty} কাপ ${menuItem.nameBn}`);
+    if (product.category === 'TEA') {
+      phrases.push(`${bnQty} কাপ ${product.nameBn}`);
     } else {
-      phrases.push(`${bnQty}টা ${menuItem.nameBn}`);
+      phrases.push(`${bnQty}টা ${product.nameBn}`);
     }
   }
 
-  if (phrases.length === 0) return 'মামা, শুধু এক গ্লাস পানি দিয়েন!';
+  if (phrases.length === 0) return 'মামা, শুধু এক কাপ চা দিয়েন!';
 
   let itemsString = '';
   if (phrases.length === 1) {
@@ -56,7 +56,7 @@ export function generateBanglaOrderSentence(items: OrderItem[]): string {
     itemsString = `${allExceptLast} আর ${last}`;
   }
 
-  const endings = ['দিয়েন তো।', 'তাড়াতাড়ি দেন মামা!', 'একটু গরম গরম দিয়েন।'];
+  const endings = ['দিয়েন তো।', 'তাড়াতাড়ি দেন মামা!', 'একটু কড়া গরম গরম দিয়েন।'];
   const ending = endings[items.length % endings.length];
 
   return `মামা, ${itemsString} ${ending}`;

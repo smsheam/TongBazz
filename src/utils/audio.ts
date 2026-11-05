@@ -262,6 +262,18 @@ class SoundSystem {
     osc.start(now);
     osc.stop(now + 0.4);
   }
+  // Convenience Aliases for Tea-Stall actions
+  public playCoin() {
+    this.playCashRegister();
+  }
+
+  public playStove() {
+    this.playKettleWhistle();
+  }
+
+  public playPour() {
+    this.playTeaPour();
+  }
 }
 
 export const sound = new SoundSystem();
