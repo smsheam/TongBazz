@@ -4,7 +4,7 @@ import Phaser from "phaser";
 type ProductId = "rawTea" | "milkTea" | "bun" | "banana" | "biscuit";
 type Product = { id: ProductId; name: string; icon: string; price: number; seconds: number; cost: number; ingredient: string };
 type Order = { id: number; guest: string; avatar: string; item: ProductId; status: "waiting" | "cooking" | "ready" | "served"; created: number };
-type Cooking = { id: number; item: ProductId; stove: number; doneAt: number };
+type Cooking = { id: number; item: ProductId; stove: number; doneAt: number; targetOrderId?: number };
 
 const PRODUCTS: Product[] = [
   { id: "rawTea", name: "রং চা", icon: "🍵", price: 10, seconds: 6, cost: 2, ingredient: "চা পাতা" },
@@ -22,6 +22,9 @@ const EVENTS = ["পাশের টেবিলে বিল নিয়ে ত�
 
 class TongbajScene extends Phaser.Scene {
   constructor() { super("TongbajScene"); }
+  preload() {
+    this.load.image("playerCharacter", "/assets/aistudio/image_62254eee.png");
+  }
   create() {
     const w = 1100, h = 650;
     const g = this.add.graphics();
@@ -86,7 +89,7 @@ class TongbajScene extends Phaser.Scene {
     // player avatar marker
     const player = this.add.container(890, 405);
     const playerShadow = this.add.ellipse(0, 28, 70, 16, 0x6c4d32, 0.2);
-    const playerAvatar = this.add.text(0, -6, "🧑🏻‍🍳", { fontSize: "58px" }).setOrigin(0.5);
+    const playerAvatar = this.add.image(0, -6, "playerCharacter").setDisplaySize(66, 66);
     const playerName = this.add.text(0, 38, "আপনি · দোকানদার", { fontFamily: "Hind Siliguri", fontSize: "15px", color: "#fff", backgroundColor: "#244638", padding: { x: 8, y: 4 } }).setOrigin(0.5);
     player.add([playerShadow, playerAvatar, playerName]);
     this.tweens.add({ targets: playerAvatar, y: -10, duration: 1250, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
@@ -114,6 +117,7 @@ export default function App() {
   const [language, setLanguage] = useState<"bn" | "en">("bn");
   const [missions, setMissions] = useState([false, false, false, false]);
   const [servedCount, setServedCount] = useState(0);
+  const [, setClockBeat] = useState(0);
   const [showMini, setShowMini] = useState(false);
   const [miniNumber, setMiniNumber] = useState(7);
   const [miniAnswer, setMiniAnswer] = useState("");
@@ -157,23 +161,21 @@ export default function App() {
   useEffect(() => {
     if (screen !== "game") return;
     const ticker = window.setInterval(() => {
+      setClockBeat((v) => v + 1);
       const now = Date.now();
-      setCooking((current) => {
-        const completed = current.filter((task) => task.doneAt <= now);
-        if (completed.length) {
-          setReady((old) => {
-            const next = { ...old };
-            completed.forEach((task) => { next[task.item] += 1; });
-            return next;
-          });
-          setOrders((old) => old.map((order) => completed.some((task) => task.item === order.item && order.status === "cooking") ? { ...order, status: "ready" } : order));
-          notify("চা/নাস্তা তৈরি! এখন সার্ভ করুন।");
-        }
-        return current.filter((task) => task.doneAt > now);
+      const completed = cooking.filter((task) => task.doneAt <= now);
+      if (!completed.length) return;
+      setCooking(cooking.filter((task) => task.doneAt > now));
+      setReady((old) => {
+        const next = { ...old };
+        completed.forEach((task) => { next[task.item] += 1; });
+        return next;
       });
+      setOrders((old) => old.map((order) => completed.some((task) => task.targetOrderId === order.id) ? { ...order, status: "ready" } : order));
+      notify("চা/নাস্তা তৈরি! এখন সার্ভ করুন।");
     }, 250);
     return () => window.clearInterval(ticker);
-  }, [screen]);
+  }, [screen, cooking]);
 
   const startGame = () => {
     setScreen("game"); setSeconds(180); setCash(200); setRevenue(0); setServedCount(0);
@@ -204,13 +206,11 @@ export default function App() {
       return;
     }
     const stove = remainingStoves[0];
+    const targetOrder = orders.find((o) => o.item === id && o.status === "waiting");
     setStock((v) => ({ ...v, [id]: v[id] - 1 }));
-    setCooking((v) => [...v, { id: Date.now(), item: id, stove, doneAt: Date.now() + p.seconds * 1000 }]);
-    setOrders((v) => {
-      const idx = v.findIndex((o) => o.item === id && o.status === "waiting");
-      if (idx < 0) return v;
-      return v.map((o, i) => i === idx ? { ...o, status: "cooking" } : o);
-    });
+    setCooking((v) => [...v, { id: Date.now(), item: id, stove, doneAt: Date.now() + p.seconds * 1000, targetOrderId: targetOrder?.id }]);
+    if (targetOrder) setOrders((v) => v.map((o) => o.id === targetOrder.id ? { ...o, status: "cooking" } : o));
+    if (cooking.length + 1 >= 3) setMissions((v) => v.map((x, i) => i === 3 ? true : x));
     notify(p.name + " চুলায় দেওয়া হয়েছে · " + p.seconds + " সেকেন্ড");
   };
   const serve = (order: Order) => {
@@ -219,7 +219,8 @@ export default function App() {
     setReady((v) => ({ ...v, [order.item]: v[order.item] - 1 }));
     setOrders((v) => v.map((o) => o.id === order.id ? { ...o, status: "served" } : o));
     setCash((v) => v + p.price); setRevenue((v) => v + p.price); setServedCount((v) => v + 1);
-    if (servedCount >= 1) setMissions((v) => v.map((x, i) => i === 0 ? true : x));
+    if (servedCount + 1 >= 2) setMissions((v) => v.map((x, i) => i === 0 ? true : x));
+    if (servedCount + 1 >= 3) setMissions((v) => v.map((x, i) => i === 1 ? true : x));
     notify(order.guest + " কে " + p.name + " পরিবেশন করা হয়েছে। +" + moneyText(p.price));
   };
   const triggerEvent = () => setEventText(EVENTS[Math.floor(Math.random() * EVENTS.length)]);
