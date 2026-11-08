@@ -2,16 +2,26 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Phaser from "phaser";
 
 type ProductId = "rawTea" | "milkTea" | "bun" | "banana" | "biscuit";
-type Product = { id: ProductId; name: string; icon: string; price: number; seconds: number; cost: number; ingredient: string };
+type IngredientId = "teaLeaves" | "milk" | "bun" | "banana" | "biscuit" | "cups";
+type Product = { id: ProductId; name: string; icon: string; price: number; seconds: number; recipe: Partial<Record<IngredientId, number>> };
+type Ingredient = { id: IngredientId; name: string; icon: string; cost: number; pack: number };
 type Order = { id: number; guest: string; avatar: string; item: ProductId; status: "waiting" | "cooking" | "ready" | "served"; created: number };
 type Cooking = { id: number; item: ProductId; stove: number; doneAt: number; targetOrderId?: number };
 
 const PRODUCTS: Product[] = [
-  { id: "rawTea", name: "রং চা", icon: "🍵", price: 10, seconds: 6, cost: 2, ingredient: "চা পাতা" },
-  { id: "milkTea", name: "দুধ চা", icon: "☕", price: 15, seconds: 8, cost: 3, ingredient: "দুধ + চা পাতা" },
-  { id: "bun", name: "বন", icon: "🍞", price: 10, seconds: 4, cost: 2, ingredient: "বন" },
-  { id: "banana", name: "কলা", icon: "🍌", price: 8, seconds: 0, cost: 1, ingredient: "কলা" },
-  { id: "biscuit", name: "বিস্কুট", icon: "🍪", price: 5, seconds: 0, cost: 1, ingredient: "বিস্কুট" }
+  { id: "rawTea", name: "রং চা", icon: "🍵", price: 10, seconds: 6, recipe: { teaLeaves: 1, cups: 1 } },
+  { id: "milkTea", name: "দুধ চা", icon: "☕", price: 15, seconds: 8, recipe: { teaLeaves: 1, milk: 1, cups: 1 } },
+  { id: "bun", name: "বন", icon: "🍞", price: 10, seconds: 4, recipe: { bun: 1 } },
+  { id: "banana", name: "কলা", icon: "🍌", price: 8, seconds: 0, recipe: { banana: 1 } },
+  { id: "biscuit", name: "বিস্কুট", icon: "🍪", price: 5, seconds: 0, recipe: { biscuit: 1 } }
+];
+const INGREDIENTS: Ingredient[] = [
+  { id: "teaLeaves", name: "চা পাতা", icon: "🍃", cost: 20, pack: 5 },
+  { id: "milk", name: "দুধ", icon: "🥛", cost: 30, pack: 5 },
+  { id: "bun", name: "বন", icon: "🍞", cost: 25, pack: 5 },
+  { id: "banana", name: "কলা", icon: "🍌", cost: 18, pack: 5 },
+  { id: "biscuit", name: "বিস্কুট", icon: "🍪", cost: 15, pack: 5 },
+  { id: "cups", name: "চায়ের কাপ", icon: "🥤", cost: 10, pack: 10 }
 ];
 const GUESTS = [
   { name: "রনি ভাই", avatar: "👨🏽" }, { name: "মিতু", avatar: "👩🏻" },
@@ -104,7 +114,7 @@ export default function App() {
   const [seconds, setSeconds] = useState(180);
   const [cash, setCash] = useState(200);
   const [revenue, setRevenue] = useState(0);
-  const [stock, setStock] = useState<Record<ProductId, number>>({ rawTea: 5, milkTea: 5, bun: 4, banana: 4, biscuit: 6 });
+  const [stock, setStock] = useState<Record<IngredientId, number>>({ teaLeaves: 6, milk: 4, bun: 4, banana: 4, biscuit: 6, cups: 10 });
   const [ready, setReady] = useState<Record<ProductId, number>>({ rawTea: 0, milkTea: 0, bun: 0, banana: 0, biscuit: 0 });
   const [orders, setOrders] = useState<Order[]>([
     { id: 1, guest: "রনি ভাই", avatar: "👨🏽", item: "milkTea", status: "waiting", created: Date.now() },
@@ -127,6 +137,7 @@ export default function App() {
   const remainingStoves = useMemo(() => [0, 1, 2].filter((stove) => !cooking.some((task) => task.stove === stove)), [cooking]);
   const moneyText = (value: number) => "৳" + value.toLocaleString("en-US");
   const product = (id: ProductId) => PRODUCTS.find((p) => p.id === id)!;
+  const canCook = (id: ProductId) => Object.entries(product(id).recipe).every(([key, qty]) => stock[key as IngredientId] >= (qty || 0));
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(""), 2200); };
 
   useEffect(() => {
@@ -185,29 +196,33 @@ export default function App() {
       { id: Date.now() + 2, guest: "মিতু", avatar: "👩🏻", item: "rawTea", status: "waiting", created: Date.now() },
       { id: Date.now() + 3, guest: "বাবলু", avatar: "🧔🏽", item: "bun", status: "waiting", created: Date.now() }
     ]);
-    setStock({ rawTea: 5, milkTea: 5, bun: 4, banana: 4, biscuit: 6 });
+    setStock({ teaLeaves: 6, milk: 4, bun: 4, banana: 4, biscuit: 6, cups: 10 });
     setReady({ rawTea: 0, milkTea: 0, bun: 0, banana: 0, biscuit: 0 });
     setCooking([]);
   };
-  const buyStock = (id: ProductId) => {
-    const cost = id === "rawTea" ? 20 : id === "milkTea" ? 30 : id === "bun" ? 25 : id === "banana" ? 18 : 15;
-    if (cash < cost) return notify("ক্যাশ কম! আগে বিক্রি বাড়ান, মামা।");
-    setCash((v) => v - cost); setStock((v) => ({ ...v, [id]: v[id] + 5 }));
-    notify(product(id).name + " স্টক +৫");
+  const buyStock = (id: IngredientId) => {
+    const ingredient = INGREDIENTS.find((item) => item.id === id)!;
+    if (cash < ingredient.cost) return notify("ক্যাশ কম! আগে বিক্রি বাড়ান, মামা।");
+    setCash((v) => v - ingredient.cost);
+    setStock((v) => ({ ...v, [id]: v[id] + ingredient.pack }));
+    notify(ingredient.name + " +" + ingredient.pack + " কেনা হয়েছে।");
   };
   const cook = (id: ProductId) => {
-    if (stock[id] <= 0) return notify("স্টক শেষ! আগে মাল কিনুন।");
-    if (remainingStoves.length === 0) return notify("তিনটা চুলাই ব্যস্ত। একটু ধৈর্য ধরুন!");
     const p = product(id);
+    if (!canCook(id)) return notify("কাঁচামাল শেষ! আগে বাজার থেকে মাল কিনুন।");
+    if (p.seconds > 0 && remainingStoves.length === 0) return notify("তিনটা চুলাই ব্যস্ত। একটু ধৈর্য ধরুন!");
+    setStock((v) => {
+      const next = { ...v };
+      Object.entries(p.recipe).forEach(([key, qty]) => { next[key as IngredientId] -= qty || 0; });
+      return next;
+    });
     if (p.seconds === 0) {
-      setStock((v) => ({ ...v, [id]: v[id] - 1 }));
       setReady((v) => ({ ...v, [id]: v[id] + 1 }));
       notify(p.name + " সার্ভ করার জন্য প্রস্তুত।");
       return;
     }
     const stove = remainingStoves[0];
     const targetOrder = orders.find((o) => o.item === id && o.status === "waiting");
-    setStock((v) => ({ ...v, [id]: v[id] - 1 }));
     setCooking((v) => [...v, { id: Date.now(), item: id, stove, doneAt: Date.now() + p.seconds * 1000, targetOrderId: targetOrder?.id }]);
     if (targetOrder) setOrders((v) => v.map((o) => o.id === targetOrder.id ? { ...o, status: "cooking" } : o));
     if (cooking.length + 1 >= 3) setMissions((v) => v.map((x, i) => i === 3 ? true : x));
@@ -249,12 +264,12 @@ export default function App() {
     <main className="game-screen">
       <header className="game-header"><div className="game-brand">টং<span>বাজ</span></div><div className="round-info"><span className="practice-tag">প্র্যাকটিস মোড · AI অতিথি</span><span className="round-clock">◷ {formatTime(seconds)}</span></div><div className="header-right"><span className="cash-pill">৳ {cash}</span><button className="exit-button" onClick={() => setScreen("home")}>বের হন</button></div></header>
       <div className="game-layout">
-        <section className="world-column"><div className="world-heading"><div><span className="section-kicker">আপনার ব্যবসা</span><h2>মায়ের দোয়া টং</h2></div><span className="weather-pill">☀️ বিকেলের আড্ডা</span></div><div className="game-world"><div ref={gameMount} className="phaser-mount"></div><div className="world-hint">কাস্টমারের অবতারে ক্লিক করুন, নতুন অর্ডার আসবে</div></div><div className="event-banner"><span className="event-icon">📢</span><div><b>পাড়ার খবর</b><p>{eventText}</p></div><button onClick={triggerEvent}>নতুন ঘটনা</button></div><div className="world-stats"><div><small>মোট বিক্রি</small><b>{moneyText(revenue)}</b></div><div><small>পরিবেশন</small><b>{servedCount} টি</b></div><div><small>চুলা ব্যস্ত</small><b>{cooking.length}/৩</b></div><div><small>স্টক আইটেম</small><b>{Object.values(stock).reduce((a, b) => a + b, 0)} টি</b></div></div></section>
+        <section className="world-column"><div className="world-heading"><div><span className="section-kicker">আপনার ব্যবসা</span><h2>মায়ের দোয়া টং</h2></div><span className="weather-pill">☀️ বিকেলের আড্ডা</span></div><div className="game-world"><div ref={gameMount} className="phaser-mount"></div><div className="world-hint">কাস্টমারের অবতারে ক্লিক করুন, নতুন অর্ডার আসবে</div></div><div className="event-banner"><span className="event-icon">📢</span><div><b>পাড়ার খবর</b><p>{eventText}</p></div><button onClick={triggerEvent}>নতুন ঘটনা</button></div><div className="world-stats"><div><small>মোট বিক্রি</small><b>{moneyText(revenue)}</b></div><div><small>পরিবেশন</small><b>{servedCount} টি</b></div><div><small>চুলা ব্যস্ত</small><b>{cooking.length}/৩</b></div><div><small>কাঁচামাল</small><b>{Object.values(stock).reduce((a, b) => a + b, 0)} ইউনিট</b></div></div></section>
         <aside className="dashboard">
           <div className="dash-title"><div><span className="section-kicker">SHOPKEEPER DASHBOARD</span><h2>দোকানের হিসাব</h2></div><span className="role-chip">☕ দোকানদার</span></div>
           <section className="dash-section"><div className="section-title"><h3>অর্ডার বোর্ড</h3><span>{orders.filter((o) => o.status !== "served").length} pending</span></div><div className="order-list">{orders.slice(-6).reverse().map((order) => <div className="order-row" key={order.id}><span className="order-avatar">{order.avatar}</span><div className="order-main"><b>{order.guest}</b><small>{product(order.item).icon} {product(order.item).name} · {moneyText(product(order.item).price)}</small></div><span className={"status status-" + order.status}>{order.status === "waiting" ? "অপেক্ষা" : order.status === "cooking" ? "চুলায়" : order.status === "ready" ? "তৈরি" : "দেওয়া হয়েছে"}</span>{order.status === "ready" && <button className="serve-button" onClick={() => serve(order)}>দেন</button>}</div>)}{orders.length === 0 && <p className="empty-state">এখনো অর্ডার আসেনি।</p>}</div></section>
           <section className="dash-section"><div className="section-title"><h3>তিনটি গ্যাসের চুলা</h3><span>রান্না ও সার্ভিস</span></div><div className="stove-grid">{[0,1,2].map((stove) => { const task = cooking.find((t) => t.stove === stove); const p = task ? product(task.item) : null; const pct = task && p ? Math.max(0, 100 - ((task.doneAt - Date.now()) / (p.seconds * 1000)) * 100) : 0; return <div className={"stove-card " + (task ? "active" : "")} key={stove}><div className="stove-flame">{task ? "🔥" : "◉"}</div><b>চুলা {stove + 1}</b><small>{task && p ? p.name + " রান্না হচ্ছে" : "খালি আছে"}</small>{task && <div className="progress-track"><i style={{ width: pct + "%" }}></i></div>}</div>; })}</div></section>
-          <section className="dash-section"><div className="section-title"><h3>মেনু ও কাঁচামাল</h3><span>স্টক কিনুন, রান্না করুন</span></div><div className="product-list">{PRODUCTS.map((p) => <div className="product-row" key={p.id}><span className="product-icon">{p.icon}</span><div className="product-info"><b>{p.name}</b><small>{moneyText(p.price)} · {p.seconds ? p.seconds + " সেকেন্ড" : "রেডি আইটেম"} · স্টক {stock[p.id]}</small></div><button className="mini-buy" onClick={() => buyStock(p.id)}>+৫ কিনুন</button><button className="cook-button" disabled={stock[p.id] <= 0 || remainingStoves.length === 0 && p.seconds > 0} onClick={() => cook(p.id)}>{p.seconds ? "রান্না" : "রেডি"}</button></div>)}</div></section>
+          <section className="dash-section"><div className="section-title"><h3>মেনু ও রান্না</h3><span>৫টি আইটেম</span></div><div className="product-list">{PRODUCTS.map((p) => <div className="product-row" key={p.id}><span className="product-icon">{p.icon}</span><div className="product-info"><b>{p.name}</b><small>{moneyText(p.price)} · {p.seconds ? p.seconds + " সেকেন্ড" : "সরাসরি সার্ভ"} · তৈরি {ready[p.id]}</small></div><button className="cook-button" disabled={!canCook(p.id) || remainingStoves.length === 0 && p.seconds > 0} onClick={() => cook(p.id)}>{p.seconds ? "রান্না" : "রেডি করুন"}</button></div>)}</div><div className="section-title ingredient-heading"><h3>কাঁচামাল কিনুন</h3><span>ব্যবসার পুঁজি থেকে</span></div><div className="ingredient-list">{INGREDIENTS.map((item) => <div className="ingredient-row" key={item.id}><span>{item.icon}</span><b>{item.name}</b><small>মজুত {stock[item.id]}</small><button className="mini-buy" onClick={() => buyStock(item.id)}>+{item.pack} · {moneyText(item.cost)}</button></div>)}</div></section>
           <section className="dash-section mission-section"><div className="section-title"><h3>আজকের মিশন</h3><span>{missions.filter(Boolean).length}/৪</span></div><div className="mission-list"><div className={missions[0] ? "done" : ""}><span>{missions[0] ? "✓" : "01"}</span><p><b>কাস্টমার খুশি</b><small>২টি অর্ডার সফলভাবে সার্ভ করুন</small></p></div><div className={servedCount >= 3 ? "done" : ""}><span>{servedCount >= 3 ? "✓" : "02"}</span><p><b>ব্যস্ত দোকানদার</b><small>৩টি আইটেম পরিবেশন করুন</small></p></div><div className={missions[2] ? "done" : ""}><span>{missions[2] ? "✓" : "03"}</span><p><b>হিসাবের মাস্টার</b><small>ছোট্ট অংকের আর্কেড জিতুন</small></p><button onClick={runMiniGame}>খেলুন</button></div><div className={missions[3] ? "done" : ""}><span>{missions[3] ? "✓" : "★"}</span><p><b>বোনাস: দোকান গুছান</b><small>সব তিনটি চুলা একসাথে চালু করুন</small></p></div></div></section>
           <div className="dashboard-foot">মামা, বাকি পরে। আগে অর্ডার দেন! 😏</div>
         </aside>
